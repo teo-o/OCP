@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRP ✅ - Sistema de Pagos</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Fraunces:ital,wght@0,700;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e1117;
+    --surface: #161b24;
+    --border: #252d3d;
+    --red: #e05c5c;
+    --red-dim: rgba(224,92,92,0.12);
+    --red-glow: rgba(224,92,92,0.06);
+    --yellow: #e8c547;
+    --green: #5bc98a;
+    --green-dim: rgba(91,201,138,0.1);
+    --green-glow: rgba(91,201,138,0.04);
+    --blue: #7eb8f7;
+    --muted: #3a4255;
+    --text: #cdd3df;
+    --text-dim: #5a6378;
+    --text-mid: #8d99ab;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    font-family: 'DM Mono', monospace;
+    color: var(--text);
+    padding: 36px 28px 56px;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header { text-align:center; margin-bottom:32px; }
+  .eyebrow { font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:var(--text-dim); margin-bottom:10px; }
+  h1 { font-family:'Fraunces',serif; font-size:clamp(20px,4vw,34px); font-weight:700; color:var(--text); line-height:1.2; }
+  h1 em { font-style:italic; font-weight:300; color:var(--text-mid); }
+  .subtitle { margin-top:8px; font-size:12px; color:var(--text-dim); }
+
+  /* SCENARIO */
+  .scenario {
+    background: var(--red-dim); border:1px solid rgba(224,92,92,0.3);
+    border-radius:8px; padding:13px 20px; font-size:12.5px; line-height:1.75;
+    max-width:860px; margin:0 auto 20px; color:var(--text-mid);
+  }
+  .scenario strong { color:var(--red); }
+
+  /* CONTEXT BANNER */
+  .context {
+    background: var(--green-dim); border:1px solid rgba(91,201,138,0.3);
+    border-radius:8px; padding:13px 20px; font-size:12px; line-height:1.75;
+    max-width:860px; margin:0 auto 28px; color:var(--text-mid);
+    display:flex; align-items:flex-start; gap:14px;
+  }
+  .context strong { color:var(--green); }
+
+  /* REQUERIMIENTO */
+  .new-req {
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:32px; gap:14px; flex-wrap:wrap;
+  }
+  .new-req-label { font-size:11px; color:var(--text-dim); text-align:center; line-height:1.6; }
+  .new-req-box {
+    background:rgba(232,197,71,0.1); border:1.5px dashed var(--yellow);
+    border-radius:8px; padding:12px 24px; font-size:13px; color:var(--yellow);
+    display:flex; align-items:center; gap:10px;
+  }
+  .new-req-arrow { font-size:22px; color:var(--text-dim); }
+
+  /* SEC TITLE */
+  .sec-title {
+    font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--text-dim); margin-bottom:12px;
+    display:flex; align-items:center; gap:10px;
+    max-width:960px; margin-left:auto; margin-right:auto;
+  }
+  .sec-title::after { content:''; flex:1; height:1px; background:var(--border); }
+  .sec-badge {
+    font-size:9px; padding:2px 9px; border-radius:20px; white-space:nowrap;
+  }
+  .sec-badge.ok  { background:var(--green-dim); color:var(--green); border:1px solid rgba(91,201,138,0.3); }
+  .sec-badge.q   { background:rgba(232,197,71,0.1); color:var(--yellow); border:1px solid rgba(232,197,71,0.3); }
+
+  /* GRIDS */
+  .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:960px; margin:0 auto 32px; }
+  .grid-3-orch { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:960px; margin:0 auto 28px; }
+
+  /* CLASS BOX base */
+  .class-box {
+    border-radius:8px; border:1px solid var(--border);
+    overflow:hidden; background:var(--surface);
+    transition: border-color .4s ease, background .4s ease;
+  }
+
+  /* Clases SRP — verdes desde el inicio */
+  .class-box.srp {
+    border-color:rgba(91,201,138,0.3);
+    background:var(--green-glow);
+  }
+  .class-box.srp .class-header  { background:rgba(91,201,138,0.04); }
+  .class-box.srp .class-name    { color:var(--green); }
+
+  /* PayPal nueva */
+  .class-box.paypal-new {
+    border-color:rgba(232,197,71,0.35);
+    background:rgba(232,197,71,0.03);
+  }
+  .class-box.paypal-new .class-header { background:rgba(232,197,71,0.05); }
+  .class-box.paypal-new .class-name   { color:var(--yellow); }
+
+  /* Módulos dependientes — neutros, se revelan en rojo */
+  .class-box.orch { transition: border-color .4s ease, background .4s ease; }
+  .class-box.orch.revealed { border-color:rgba(224,92,92,0.45); background:var(--red-glow); }
+  .class-box.orch.revealed .class-header { background:rgba(224,92,92,0.06); }
+  .class-box.orch.revealed .class-name   { color:var(--red); }
+
+  .class-header {
+    padding:10px 14px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+    transition: background .4s ease;
+  }
+  .class-stereotype { font-size:9px; color:var(--text-dim); letter-spacing:.1em; }
+  .class-name { font-size:13px; font-weight:500; color:var(--blue); margin-top:2px; transition:color .4s; }
+
+  /* Badges */
+  .cbadge {
+    font-size:9px; padding:2px 8px; border-radius:20px; white-space:nowrap;
+  }
+  .cbadge.green  { background:rgba(91,201,138,0.12); color:var(--green);  border:1px solid rgba(91,201,138,0.25); }
+  .cbadge.yellow { background:rgba(232,197,71,0.12); color:var(--yellow); border:1px solid rgba(232,197,71,0.25); opacity:1 !important; transform:scale(1) !important; }
+  .cbadge.red    {
+    background:rgba(224,92,92,0.12); color:var(--red); border:1px solid rgba(224,92,92,0.25);
+    opacity:0; transform:scale(.75);
+    transition: opacity .3s ease, transform .3s ease;
+  }
+  .class-box.orch.revealed .cbadge.red { opacity:1; transform:scale(1); }
+
+  .class-section { border-bottom:1px solid var(--border); padding:10px 14px; }
+  .class-section:last-child { border-bottom:none; }
+  .section-label { font-size:9px; letter-spacing:.12em; color:var(--text-dim); text-transform:uppercase; margin-bottom:6px; }
+
+  .method {
+    font-size:11px; color:var(--text-mid); padding:2px 0;
+    display:flex; align-items:flex-start; gap:6px; line-height:1.5;
+  }
+  .method-dot { width:5px; height:5px; border-radius:50%; background:var(--muted); flex-shrink:0; margin-top:5px; }
+  .method-dot.g { background:var(--green); }
+  .method-dot.y { background:var(--yellow); }
+  .method-dot.r { background:var(--red); }
+  .method.ok  { color:var(--green); }
+  .method.yw  { color:var(--yellow); }
+  .method.bad { color:var(--red); font-weight:500; }
+
+  /* Contenido que aparece al revelar */
+  .reveal-in-class {
+    max-height:0; overflow:hidden; opacity:0;
+    transition: max-height .5s ease, opacity .4s ease;
+  }
+  .class-box.orch.revealed .reveal-in-class { max-height:180px; opacity:1; }
+
+  /* NOTE INLINE */
+  .inline-note {
+    font-size:10px; color:var(--text-dim); font-style:italic;
+    padding:4px 0 2px; line-height:1.5;
+  }
+
+  /* BOTONES */
+  .btn-wrap { text-align:center; margin-bottom:14px; }
+  .btn {
+    background:var(--surface); border-radius:8px;
+    font-family:'DM Mono',monospace; font-size:13px;
+    padding:11px 26px; cursor:pointer;
+    display:inline-flex; align-items:center; gap:10px;
+    transition: all .2s ease; letter-spacing:.04em; border:1.5px solid transparent;
+  }
+  .btn:hover { transform:translateY(-1px); }
+
+  .btn-orch  { border-color:rgba(224,92,92,0.4); color:var(--red); }
+  .btn-orch:hover { background:var(--red-dim); border-color:var(--red); }
+  .btn-orch.open  { background:var(--red-dim); border-color:var(--red); color:var(--text-mid); }
+
+  .btn-files { border-color:rgba(224,92,92,0.4); color:var(--red); }
+  .btn-files:hover { background:var(--red-dim); border-color:var(--red); }
+  .btn-files.open  { background:var(--red-dim); border-color:var(--red); color:var(--text-mid); }
+
+  .btn-stats { border-color:rgba(232,197,71,0.4); color:var(--yellow); }
+  .btn-stats:hover { background:rgba(232,197,71,0.08); border-color:var(--yellow); }
+  .btn-stats.open  { background:rgba(232,197,71,0.08); border-color:var(--yellow); color:var(--text-mid); }
+
+  /* ARCHIVOS */
+  .files-list { display:flex; flex-direction:column; gap:6px; max-width:820px; margin:0 auto 28px; }
+  @keyframes slideIn { from{opacity:0;transform:translateX(-14px)} to{opacity:1;transform:translateX(0)} }
+  .file-row {
+    display:flex; align-items:center; gap:12px;
+    padding:10px 16px; border-radius:7px; border:1px solid var(--border);
+    background:var(--surface); font-size:12px;
+    animation: slideIn .35s ease both;
+  }
+  .file-row.safe    { border-color:rgba(91,201,138,0.25); background:var(--green-glow); }
+  .file-row.touched { border-color:rgba(224,92,92,0.3);   background:var(--red-glow); }
+  .file-row.created { border-color:rgba(232,197,71,0.25); background:rgba(232,197,71,0.03); }
+  .file-icon { font-size:15px; flex-shrink:0; }
+  .file-name { flex:1; font-weight:500; }
+  .file-row.safe    .file-name { color:var(--green); }
+  .file-row.touched .file-name { color:var(--red); }
+  .file-row.created .file-name { color:var(--yellow); }
+  .file-action { font-size:11px; white-space:nowrap; }
+  .file-row.safe    .file-action { color:rgba(91,201,138,0.7); }
+  .file-row.touched .file-action { color:rgba(224,92,92,0.7); }
+  .file-row.created .file-action { color:rgba(232,197,71,0.7); }
+  .file-why { font-size:10.5px; color:var(--text-dim); margin-left:auto; text-align:right; }
+
+  /* STATS */
+  .impact-row { display:flex; align-items:center; justify-content:center; gap:14px; margin:0 0 22px; flex-wrap:wrap; }
+  .impact-stat { text-align:center; padding:14px 18px; border-radius:8px; border:1px solid var(--border); background:var(--surface); min-width:100px; }
+  .impact-stat.bad { border-color:rgba(224,92,92,0.3); background:var(--red-dim); }
+  .impact-stat.ok  { border-color:rgba(91,201,138,0.3); background:var(--green-glow); }
+  .impact-num   { font-family:'Fraunces',serif; font-size:30px; font-weight:700; line-height:1; }
+  .impact-label { font-size:10px; color:var(--text-dim); margin-top:4px; }
+
+  /* CLOSING NOTE */
+  .closing {
+    max-width:820px; margin:0 auto; padding:18px 22px; border-radius:10px;
+    border:1px dashed rgba(224,92,92,0.3); background:var(--red-dim);
+    text-align:center;
+  }
+  .closing .q {
+    font-family:'Fraunces',serif; font-size:16px; font-style:italic;
+    color:var(--red); margin-bottom:8px;
+  }
+  .closing .a { font-size:12px; color:var(--text-dim); line-height:1.75; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .pulse { animation: pulse 2s ease infinite; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .fade-up { animation: fadeUp .4s ease both; }
+</style>
+
+<style>
+/* ── NAV OVERLAY — no toca estilos originales ── */
+.site-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 54px;
+  background: rgba(14,17,23,0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid #252d3d;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  z-index: 9999;
+  box-sizing: border-box;
+}
+.nav-brand {
+  font-family: 'Fraunces', serif;
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 300;
+  color: #8d99ab;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.nav-brand strong {
+  font-style: normal;
+  font-weight: 700;
+  color: #e8c547;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.nav-link {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  color: #5a6378;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.nav-link:hover {
+  color: #cdd3df;
+  background: #161b24;
+  border-color: #252d3d;
+}
+.nav-step {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 20px;
+  background: #161b24;
+  border: 1px solid #252d3d;
+  color: #5a6378;
+  transition: all 0.2s ease;
+}
+/* activos */
+.nav-link.active-fragil { color: #e05c5c; background: rgba(224,92,92,0.1); border-color: rgba(224,92,92,0.25); }
+.nav-link.active-srp    { color: #5bc98a; background: rgba(91,201,138,0.1); border-color: rgba(91,201,138,0.25); }
+.nav-link.active-ocp    { color: #e8c547; background: rgba(232,197,71,0.1); border-color: rgba(232,197,71,0.25); }
+.nav-link.active-fragil .nav-step { background: rgba(224,92,92,0.15); border-color: rgba(224,92,92,0.3); color: #e05c5c; }
+.nav-link.active-srp    .nav-step { background: rgba(91,201,138,0.12); border-color: rgba(91,201,138,0.3); color: #5bc98a; }
+.nav-link.active-ocp    .nav-step { background: rgba(232,197,71,0.12); border-color: rgba(232,197,71,0.3); color: #e8c547; }
+/* compensar nav fijo */
+body { padding-top: 82px !important; }
+</style>
+
+</head>
+<body>
+<!-- NAVBAR -->
+<nav class="site-nav">
+  <span class="nav-brand"><strong>OCP</strong> + Polimorfismo</span>
+  <div class="nav-links">
+    <a href="ejemplo-fragil.html" class="nav-link ">
+      <span class="nav-step">01</span> Sin OCP
+    </a>
+    <a href="ejemplo-fragil-conSRP.html" class="nav-link active-srp">
+      <span class="nav-step">02</span> SRP sin OCP
+    </a>
+    <a href="concepto-ocp-polimorfismo.html" class="nav-link ">
+      <span class="nav-step">03</span> OCP + Polimorfismo
+    </a>
+  </div>
+</nav>
+
+
+<div class="header">
+  <div class="eyebrow">Sistema de Pagos — SRP aplicado</div>
+  <h1>El equipo separó bien las clases <em>— ¿alcanzó?</em></h1>
+  <div class="subtitle">Cada método de pago ya tiene su propia clase. Ahora llega un requerimiento nuevo.</div>
+</div>
+
+<div class="scenario">
+  <strong>Escenario:</strong> La empresa tiene pagos por Tarjeta y Transferencia.
+  El equipo ya aplicó SRP: <strong>cada método de pago vive en su propia clase</strong>,
+  con su propia responsabilidad. Ahora el cliente pide agregar <strong>PayPal</strong>.
+  ¿El hecho de tener SRP bien aplicado es suficiente para que el cambio no duela?
+</div>
+
+<div class="context">
+  <span style="font-size:20px; flex-shrink:0">✅</span>
+  <div>
+    El equipo aplicó <strong>SRP</strong>: cada método de pago vive en su propia clase.
+    <code style="color:var(--green)">TarjetaService</code> solo sabe de tarjetas.
+    <code style="color:var(--green)">TransferenciaService</code> solo sabe de transferencias.
+    Nadie mezcla responsabilidades.
+  </div>
+</div>
+
+<div class="new-req">
+  <div class="new-req-label">Requerimiento<br>del cliente</div>
+  <div class="new-req-arrow">→</div>
+  <div class="new-req-box">🆕 Agregar método de pago: <strong>PayPal</strong></div>
+  <div class="new-req-arrow">→</div>
+  <div class="new-req-label pulse" style="color:var(--yellow)">SRP ya está aplicado.<br>¿Cuánto cuesta esto?</div>
+</div>
+
+<div class="sec-title">
+  <span>Clases de métodos de pago</span>
+  <span class="sec-badge ok">✅ SRP — una responsabilidad cada una</span>
+</div>
+
+<div class="grid-3">
+
+  <div class="class-box srp">
+    <div class="class-header">
+      <div>
+        <div class="class-stereotype">«service»</div>
+        <div class="class-name">TarjetaService</div>
+      </div>
+      <span class="cbadge green">✅ intacta</span>
+    </div>
+    <div class="class-section">
+      <div class="section-label">su única responsabilidad</div>
+      <div class="method ok"><div class="method-dot g"></div>procesar(monto)</div>
+      <div class="method ok"><div class="method-dot g"></div>validar(datos)</div>
+      <div class="method ok"><div class="method-dot g"></div>obtenerIcono()</div>
+    </div>
+    <div class="class-section">
+      <div class="inline-note">Solo cambia si cambia<br>la lógica de tarjeta.</div>
+    </div>
+  </div>
+
+  <div class="class-box srp">
+    <div class="class-header">
+      <div>
+        <div class="class-stereotype">«service»</div>
+        <div class="class-name">TransferenciaService</div>
+      </div>
+      <span class="cbadge green">✅ intacta</span>
+    </div>
+    <div class="class-section">
+      <div class="section-label">su única responsabilidad</div>
+      <div class="method ok"><div class="method-dot g"></div>procesar(monto)</div>
+      <div class="method ok"><div class="method-dot g"></div>validar(datos)</div>
+      <div class="method ok"><div class="method-dot g"></div>obtenerIcono()</div>
+    </div>
+    <div class="class-section">
+      <div class="inline-note">Solo cambia si cambia<br>el flujo bancario.</div>
+    </div>
+  </div>
+
+  <div class="class-box paypal-new">
+    <div class="class-header">
+      <div>
+        <div class="class-stereotype">«service nuevo»</div>
+        <div class="class-name">PayPalService</div>
+      </div>
+      <span class="cbadge yellow">🟡 crear</span>
+    </div>
+    <div class="class-section">
+      <div class="section-label">lo que se necesita crear</div>
+      <div class="method yw"><div class="method-dot y"></div>procesar(monto)</div>
+      <div class="method yw"><div class="method-dot y"></div>validar(datos)</div>
+      <div class="method yw"><div class="method-dot y"></div>obtenerIcono()</div>
+    </div>
+    <div class="class-section">
+      <div class="inline-note">Archivo nuevo.<br>Esto sí es necesario.</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="sec-title">
+  <span>Módulos que dependen del tipo de pago</span>
+  <span class="sec-badge q">¿qué pasa en el resto del sistema?</span>
+</div>
+
+<div class="btn-wrap">
+  <button class="btn btn-orch" id="btn-orch" onclick="toggleOrch()">
+    <span id="orch-text">🔍 Ver dónde más impacta el cambio</span>
+  </button>
+</div>
+
+<div class="grid-3-orch">
+
+  <div class="class-box orch">
+    <div class="class-header">
+      <div>
+        <div class="class-stereotype">«factory»</div>
+        <div class="class-name">PaymentFactory</div>
+      </div>
+      <span class="cbadge red">🔴 modificar</span>
+    </div>
+    <div class="class-section">
+      <div class="section-label">crea la instancia correcta</div>
+      <div class="method"><div class="method-dot"></div>crearServicio(tipo)</div>
+      <div class="reveal-in-class">
+        <div class="method bad" style="margin-top:6px; flex-direction:column; align-items:flex-start; font-size:10.5px;">
+          if tipo == "tarjeta"<br>
+          &nbsp;→ return new TarjetaService()<br>
+          else if "transferencia"<br>
+          &nbsp;→ return new TransferService()<br>
+          <span style="color:var(--red)">else if "paypal" ← hay que agregar</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="class-box orch">
+    <div class="class-header">
+      <div>
+        <div class="class-stereotype">«exporter»</div>
+        <div class="class-name">GeneradorReportes</div>
+      </div>
+      <span class="cbadge red">🔴 modificar</span>
+    </div>
+    <div class="class-section">
+      <div class="section-label">exporta datos a contabilidad</div>
+      <div class="method"><div class="method-dot"></div>exportarFila(tipo, pago)</div>
+      <div class="reveal-in-class">
+        <div class="method bad" style="margin-top:6px; flex-direction:column; align-items:flex-start; font-size:10.5px;">
+          if tipo == "tarjeta" → exportarCSV()<br>
+          else if "transferencia" → exportarXML()<br>
+          <span style="color:var(--red)">else if "paypal" → API() ← hay que agregar</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="class-box orch">
+    <div class="class-header">
+      <div>
+        <div class="class-stereotype">«ui / view»</div>
+        <div class="class-name">CheckoutView</div>
+      </div>
+      <span class="cbadge red">🔴 modificar</span>
+    </div>
+    <div class="class-section">
+      <div class="section-label">decide qué icono mostrar</div>
+      <div class="method"><div class="method-dot"></div>renderizar(tipo)</div>
+      <div class="reveal-in-class">
+        <div class="method bad" style="margin-top:6px; flex-direction:column; align-items:flex-start; font-size:10.5px;">
+          if tipo == "tarjeta" → 💳<br>
+          else if "transferencia" → 🏦<br>
+          <span style="color:var(--red)">else if "paypal" → 🅿️ ← hay que agregar</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- <div class="class-box orch">
+    <div class="class-header">
+        <div>
+        <div class="class-stereotype">«service»</div>
+        <div class="class-name">NotificadorEmail</div>
+        </div>
+        <span class="cbadge red">🔴 modificar</span>
+    </div>
+    <div class="class-section">
+        <div class="section-label">métodos de confirmación</div>
+        <div class="method"><div class="method-dot"></div>enviarConfirmacion(pago)</div>
+        <div class="reveal-in-class">
+        <div class="method bad" style="margin-top:6px; flex-direction:column; align-items:flex-start; font-size:10.5px;">
+            <span class="comment">// Métodos acoplados al tipo</span><br>
+            confirmarTarjeta(pago)<br>
+            confirmarTransferencia(pago)<br>
+            <span style="color:var(--red)">+ nuevo: confirmarPayPal(pago)</span>
+        </div>
+        </div>
+    </div>
+    </div> -->
+
+</div>
+
+<div style="max-width:960px; margin:-16px auto 32px; padding:14px 18px; border-radius:8px; background:rgba(232,197,71,0.06); border:1px solid rgba(232,197,71,0.2); font-size:12px; line-height:1.8; color:var(--text-dim); display:flex; gap:12px; align-items:flex-start;">
+  <span style="font-size:18px; flex-shrink:0; margin-top:1px">⚠️</span>
+  <div>
+    <strong style="color:var(--yellow)">Importante:</strong>
+    En este ejemplo el problema aparece en diferentes capas.
+    Ese mismo <code style="color:var(--yellow)">if/switch</code> puede vivir en <strong style="color:var(--text)">cualquier clase del sistema</strong> —
+    un servicio, un repositorio, un controlador — siempre que esa clase necesite decidir
+    <em>"¿cuál variante usar según el tipo?"</em>.
+    SRP no garantiza que ese patrón desaparezca, solo garantiza que cada clase tenga
+    <strong style="color:var(--text)">una sola razón para cambiar.</strong>
+  </div>
+</div>
+
+<div class="sec-title"><span>Archivos que hay que abrir</span></div>
+
+<div class="btn-wrap">
+  <button class="btn btn-files" id="btn-files" onclick="toggleFiles()">
+    <span id="files-text">📂 Revelar archivos afectados</span>
+  </button>
+</div>
+
+<div id="files-container" style="display:none">
+  <div class="files-list">
+    <div class="file-row safe" style="animation-delay:.00s">
+      <div class="file-icon">📄</div>
+      <div class="file-name">TarjetaService.ts</div>
+      <div class="file-action">✅ no tocar</div>
+      <div class="file-why">SRP — no tiene nada que ver con PayPal</div>
+    </div>
+    <div class="file-row safe" style="animation-delay:.08s">
+      <div class="file-icon">📄</div>
+      <div class="file-name">TransferenciaService.ts</div>
+      <div class="file-action">✅ no tocar</div>
+      <div class="file-why">SRP — no tiene nada que ver con PayPal</div>
+    </div>
+    <div class="file-row touched" style="animation-delay:.18s">
+      <div class="file-icon">📄</div>
+      <div class="file-name">PaymentFactory.ts</div>
+      <div class="file-action">🔴 modificar</div>
+      <div class="file-why">Agregar "paypal" a la creación (Capa de Infra)</div>
+    </div>
+    <div class="file-row touched" style="animation-delay:.28s">
+      <div class="file-icon">📄</div>
+      <div class="file-name">GeneradorReportes.ts</div>
+      <div class="file-action">🔴 modificar</div>
+      <div class="file-why">Agregar "paypal" al reporte (Capa de Negocio)</div>
+    </div>
+    <div class="file-row touched" style="animation-delay:.38s">
+      <div class="file-icon">📄</div>
+      <div class="file-name">CheckoutView.ts</div>
+      <div class="file-action">🔴 modificar</div>
+      <div class="file-why">Agregar el botón/icono (Capa de Presentación)</div>
+    </div>
+    <!-- <div class="file-row touched" style="animation-delay:.38s">
+      <div class="file-icon">📄</div>
+      <div class="file-name">NotificadorEmail.ts</div>
+      <div class="file-action">🔴 modificar</div>
+      <div class="file-why">Agregar notificación de PayPal (Capa de Infra)</div>
+    </div> -->
+    <div class="file-row created" style="animation-delay:.48s">
+      <div class="file-icon">✨</div>
+      <div class="file-name">PayPalService.ts</div>
+      <div class="file-action">🟡 crear</div>
+      <div class="file-why">La lógica nueva — esto sí es necesario</div>
+    </div>
+  </div>
+</div>
+
+<div class="sec-title"><span>Resultado</span></div>
+
+<div class="btn-wrap">
+  <button class="btn btn-stats" id="btn-stats" onclick="toggleStats()">
+    <span id="stats-text">📊 Ver el resultado</span>
+  </button>
+</div>
+
+<div id="stats-container" style="display:none" class="fade-up">
+  <div class="impact-row">
+    <div class="impact-stat ok">
+      <div class="impact-num" style="color:var(--green)">2</div>
+      <div class="impact-label">clases protegidas<br>por SRP</div>
+    </div>
+    <div class="impact-stat bad">
+      <div class="impact-num" style="color:var(--red)">3</div>
+      <div class="impact-label">módulos distintos que<br>hay que modificar</div>
+    </div>
+    <div class="impact-stat ok">
+      <div class="impact-num" style="color:var(--green)">1</div>
+      <div class="impact-label">archivo nuevo<br>realmente necesario</div>
+    </div>
+  </div>
+
+  <div class="closing">
+    <div class="q">"SRP separó la lógica de pago por tipo, pero el resto del sistema sigue acoplado a conocer esos tipos."</div>
+    <div class="a">
+      El problema no está en un solo lugar. La Fábrica, los Reportes y la UI tienen cada uno su propio <code>if</code> para decidir qué hacer según el tipo de pago. SRP no evita esta repetición; eso es trabajo del OCP.
+    </div>
+  </div>
+</div>
+
+<script>
+  let orchOpen = false;
+  function toggleOrch() {
+    orchOpen = !orchOpen;
+    document.querySelectorAll('.class-box.orch').forEach((box, i) => {
+      setTimeout(() => {
+        orchOpen ? box.classList.add('revealed') : box.classList.remove('revealed');
+      }, orchOpen ? i * 130 : 0);
+    });
+    document.getElementById('orch-text').textContent =
+      orchOpen ? ' Ocultar módulos' : '🔍 Ver dónde más impacta el cambio';
+    document.getElementById('btn-orch').classList.toggle('open', orchOpen);
+  }
+
+  let filesOpen = false;
+  function toggleFiles() {
+    filesOpen = !filesOpen;
+    document.getElementById('files-container').style.display = filesOpen ? 'block' : 'none';
+    document.getElementById('files-text').textContent =
+      filesOpen ? ' Ocultar archivos' : '📂 Revelar archivos afectados';
+    document.getElementById('btn-files').classList.toggle('open', filesOpen);
+  }
+
+  let statsOpen = false;
+  function toggleStats() {
+    statsOpen = !statsOpen;
+    document.getElementById('stats-container').style.display = statsOpen ? 'block' : 'none';
+    document.getElementById('stats-text').textContent =
+      statsOpen ? ' Ocultar resultado' : '📊 Ver el resultado';
+    document.getElementById('btn-stats').classList.toggle('open', statsOpen);
+  }
+</script>
+
+</body>
+</html>

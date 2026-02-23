@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagrama — Sistema Frágil</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Fraunces:ital,wght@0,700;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e1117;
+    --surface: #161b24;
+    --border: #252d3d;
+    --red: #e05c5c;
+    --red-dim: rgba(224,92,92,0.12);
+    --red-glow: rgba(224,92,92,0.06);
+    --yellow: #e8c547;
+    --green: #5bc98a;
+    --blue: #7eb8f7;
+    --muted: #3a4255;
+    --text: #cdd3df;
+    --text-dim: #5a6378;
+    --text-mid: #8d99ab;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    font-family: 'DM Mono', monospace;
+    color: var(--text);
+    padding: 36px 28px 56px;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header { text-align:center; margin-bottom:40px; }
+  .eyebrow { font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:var(--text-dim); margin-bottom:10px; }
+  h1 { font-family:'Fraunces',serif; font-size:clamp(22px,4vw,36px); color:var(--red); font-weight:700; }
+  h1 span { color:var(--text-mid); font-style:italic; font-weight:300; }
+  .subtitle { margin-top:8px; font-size:12px; color:var(--text-dim); }
+
+  /* SCENARIO */
+  .scenario {
+    background:var(--red-dim); border:1px solid rgba(224,92,92,0.3);
+    border-radius:8px; padding:14px 22px; font-size:12.5px; line-height:1.7;
+    max-width:820px; margin:0 auto 32px; color:var(--text-mid);
+  }
+  .scenario strong { color:var(--red); }
+
+  /* REQUERIMIENTO */
+  .new-req { display:flex; align-items:center; justify-content:center; margin-bottom:32px; gap:14px; flex-wrap:wrap; }
+  .new-req-label { font-size:11px; color:var(--text-dim); text-align:center; line-height:1.6; }
+  .new-req-box {
+    background:rgba(232,197,71,0.1); border:1.5px dashed var(--yellow);
+    border-radius:8px; padding:12px 24px; font-size:13px; color:var(--yellow);
+    display:flex; align-items:center; gap:10px;
+  }
+  .new-req-arrow { font-size:22px; color:var(--red); }
+
+  /* SECTION DIVIDER */
+  .sec-title {
+    font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--text-dim); margin-bottom:12px;
+    display:flex; align-items:center; gap:10px;
+    max-width:960px; margin-left:auto; margin-right:auto;
+  }
+  .sec-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+  /* CLASS GRID */
+  .classes-grid {
+    display:grid; grid-template-columns:repeat(3,1fr);
+    gap:16px; max-width:960px; margin:0 auto 28px;
+  }
+
+  /* Clase — estado neutro por defecto */
+  .class-box {
+    border-radius:8px; border:1px solid var(--border);
+    overflow:hidden; background:var(--surface);
+    transition: border-color .4s ease, background .4s ease;
+  }
+  /* Estado revelado */
+  .class-box.revealed.affected  { border-color:rgba(224,92,92,0.5);  background:var(--red-glow); }
+  .class-box.revealed.new-class { border-color:rgba(232,197,71,0.4); background:rgba(232,197,71,0.04); }
+
+  .class-header {
+    padding:10px 14px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+    transition: background .4s ease;
+  }
+  .class-box.revealed.affected  .class-header { background:rgba(224,92,92,0.07); }
+  .class-box.revealed.new-class .class-header { background:rgba(232,197,71,0.06); }
+
+  .class-stereotype { font-size:9px; color:var(--text-dim); letter-spacing:.1em; }
+  .class-name { font-size:13px; font-weight:500; color:var(--blue); margin-top:2px; transition:color .4s; }
+  .class-box.revealed.affected  .class-name { color:var(--red); }
+  .class-box.revealed.new-class .class-name { color:var(--yellow); }
+
+  /* Badge — oculto, aparece al revelar */
+  .affect-badge {
+    font-size:9.5px; padding:3px 8px; border-radius:20px; white-space:nowrap;
+    opacity:0; transform:scale(.75); pointer-events:none;
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  .class-box.revealed .affect-badge { opacity:1; transform:scale(1); pointer-events:auto; }
+  .badge-red    { background:rgba(224,92,92,0.15); color:var(--red);    border:1px solid rgba(224,92,92,0.3); }
+  .badge-yellow { background:rgba(232,197,71,0.12); color:var(--yellow); border:1px solid rgba(232,197,71,0.3); }
+
+  .class-section { border-bottom:1px solid var(--border); padding:10px 14px; }
+  .class-section:last-child { border-bottom:none; }
+  .section-label { font-size:9px; letter-spacing:.12em; color:var(--text-dim); text-transform:uppercase; margin-bottom:6px; }
+
+  .method {
+    font-size:11px; color:var(--text-mid); padding:2px 0;
+    display:flex; align-items:flex-start; gap:6px; line-height:1.5;
+  }
+  .method-dot { width:5px; height:5px; border-radius:50%; background:var(--muted); flex-shrink:0; margin-top:5px; }
+  .method-dot.red    { background:var(--red); }
+  .method-dot.yellow { background:var(--yellow); }
+  .method.highlight  { color:var(--red); font-weight:500; }
+  .method.hl-yellow  { color:var(--yellow); }
+
+  /* Bloques que se revelan */
+  .reveal-in-class {
+    max-height:0; overflow:hidden; opacity:0;
+    transition: max-height .5s ease, opacity .4s ease;
+  }
+  .class-box.revealed .reveal-in-class { max-height:200px; opacity:1; }
+
+  /* BOTONES */
+  .btn-wrap { text-align:center; margin-bottom:20px; }
+  .btn {
+    background:var(--surface); border-radius:8px;
+    font-family:'DM Mono',monospace; font-size:13px;
+    padding:12px 28px; cursor:pointer;
+    display:inline-flex; align-items:center; gap:10px;
+    transition: all .2s ease; letter-spacing:.04em; border:1.5px solid transparent;
+  }
+  .btn:hover { transform:translateY(-1px); }
+
+  .btn-classes { border-color:rgba(126,184,247,0.4); color:var(--blue); }
+  .btn-classes:hover { background:rgba(126,184,247,0.07); border-color:var(--blue); box-shadow:0 4px 18px rgba(126,184,247,0.1); }
+  .btn-classes.open  { background:rgba(126,184,247,0.07); border-color:var(--blue); color:var(--text-mid); }
+
+  .btn-files { border-color:rgba(224,92,92,0.4); color:var(--red); }
+  .btn-files:hover { background:var(--red-dim); border-color:var(--red); box-shadow:0 4px 18px rgba(224,92,92,0.12); }
+  .btn-files.open  { background:var(--red-dim); border-color:var(--red); color:var(--text-mid); }
+
+  .btn-stats { border-color:rgba(232,197,71,0.4); color:var(--yellow); }
+  .btn-stats:hover { background:rgba(232,197,71,0.08); border-color:var(--yellow); box-shadow:0 4px 18px rgba(232,197,71,0.1); }
+  .btn-stats.open  { background:rgba(232,197,71,0.08); border-color:var(--yellow); color:var(--text-mid); }
+
+  /* ARCHIVOS */
+  .files-list { display:flex; flex-direction:column; gap:6px; max-width:820px; margin:0 auto 28px; }
+  @keyframes slideIn {
+    from { opacity:0; transform:translateX(-14px); }
+    to   { opacity:1; transform:translateX(0); }
+  }
+  .file-row {
+    display:flex; align-items:center; gap:12px;
+    padding:10px 16px; border-radius:7px; border:1px solid var(--border);
+    background:var(--surface); font-size:12px;
+    animation: slideIn .35s ease both;
+  }
+  .file-row.touched { border-color:rgba(224,92,92,0.3); background:var(--red-glow); }
+  .file-row.created { border-color:rgba(232,197,71,0.25); background:rgba(232,197,71,0.04); }
+  .file-icon  { font-size:15px; flex-shrink:0; }
+  .file-name  { flex:1; font-weight:500; }
+  .file-row.touched .file-name { color:var(--red); }
+  .file-row.created .file-name { color:var(--yellow); }
+  .file-action { font-size:11px; white-space:nowrap; }
+  .file-row.touched .file-action { color:rgba(224,92,92,0.7); }
+  .file-row.created .file-action { color:rgba(232,197,71,0.7); }
+  .file-why { font-size:10.5px; color:var(--text-dim); margin-left:auto; text-align:right; }
+
+  /* STATS */
+  .impact-row {
+    display:flex; align-items:center; justify-content:center;
+    gap:16px; margin:0 0 24px; flex-wrap:wrap;
+  }
+  .impact-stat {
+    text-align:center; padding:14px 20px; border-radius:8px;
+    border:1px solid var(--border); background:var(--surface); min-width:110px;
+  }
+  .impact-stat.bad { border-color:rgba(224,92,92,0.3); background:var(--red-dim); }
+  .impact-num   { font-family:'Fraunces',serif; font-size:32px; font-weight:700; color:var(--red); line-height:1; }
+  .impact-label { font-size:10px; color:var(--text-dim); margin-top:4px; }
+
+  /* BOTTOM */
+  .bottom-msg {
+    text-align:center; padding:20px;
+    border:1px dashed rgba(224,92,92,0.35); border-radius:10px;
+    max-width:820px; margin:0 auto; background:var(--red-dim);
+  }
+  .bottom-msg .question { font-family:'Fraunces',serif; font-size:17px; font-style:italic; color:var(--red); margin-bottom:6px; }
+  .bottom-msg .answer   { font-size:12px; color:var(--text-dim); line-height:1.7; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .pulse { animation: pulse 2s ease infinite; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .fade-up { animation: fadeUp .4s ease both; }
+</style>
+
+<style>
+/* ── NAV OVERLAY — no toca estilos originales ── */
+.site-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 54px;
+  background: rgba(14,17,23,0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid #252d3d;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  z-index: 9999;
+  box-sizing: border-box;
+}
+.nav-brand {
+  font-family: 'Fraunces', serif;
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 300;
+  color: #8d99ab;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.nav-brand strong {
+  font-style: normal;
+  font-weight: 700;
+  color: #e8c547;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.nav-link {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  color: #5a6378;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.nav-link:hover {
+  color: #cdd3df;
+  background: #161b24;
+  border-color: #252d3d;
+}
+.nav-step {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 20px;
+  background: #161b24;
+  border: 1px solid #252d3d;
+  color: #5a6378;
+  transition: all 0.2s ease;
+}
+/* activos */
+.nav-link.active-fragil { color: #e05c5c; background: rgba(224,92,92,0.1); border-color: rgba(224,92,92,0.25); }
+.nav-link.active-srp    { color: #5bc98a; background: rgba(91,201,138,0.1); border-color: rgba(91,201,138,0.25); }
+.nav-link.active-ocp    { color: #e8c547; background: rgba(232,197,71,0.1); border-color: rgba(232,197,71,0.25); }
+.nav-link.active-fragil .nav-step { background: rgba(224,92,92,0.15); border-color: rgba(224,92,92,0.3); color: #e05c5c; }
+.nav-link.active-srp    .nav-step { background: rgba(91,201,138,0.12); border-color: rgba(91,201,138,0.3); color: #5bc98a; }
+.nav-link.active-ocp    .nav-step { background: rgba(232,197,71,0.12); border-color: rgba(232,197,71,0.3); color: #e8c547; }
+/* compensar nav fijo */
+body { padding-top: 82px !important; }
+</style>
+
+</head>
+<body>
+<!-- NAVBAR -->
+<nav class="site-nav">
+  <span class="nav-brand"><strong>OCP</strong> + Polimorfismo</span>
+  <div class="nav-links">
+    <a href="ejemplo-fragil.html" class="nav-link active-fragil">
+      <span class="nav-step">01</span> Sin OCP
+    </a>
+    <a href="ejemplo-fragil-conSRP.html" class="nav-link ">
+      <span class="nav-step">02</span> SRP sin OCP
+    </a>
+    <a href="concepto-ocp-polimorfismo.html" class="nav-link ">
+      <span class="nav-step">03</span> OCP + Polimorfismo
+    </a>
+  </div>
+</nav>
+
+
+<!-- HEADER -->
+<div class="header">
+  <div class="eyebrow">Violación de OCP — Diseño frágil</div>
+  <h1>Sistema de Pagos <span>sin OCP</span></h1>
+  <div class="subtitle">¿Qué pasa cuando agregamos un nuevo método de pago?</div>
+</div>
+
+<!-- ESCENARIO -->
+<div class="scenario">
+  <strong>Escenario:</strong> La empresa tiene pagos por Tarjeta y Transferencia.
+  El cliente pide agregar <strong>PayPal</strong>. El equipo abre el código y encuentra
+  la lógica del tipo de pago esparcida en múltiples clases. ¿Cuánto daño hace ese cambio?
+</div>
+
+<!-- REQUERIMIENTO -->
+<div class="new-req">
+  <div class="new-req-label">Requerimiento<br>del cliente</div>
+  <div class="new-req-arrow">→</div>
+  <div class="new-req-box">🆕 Agregar método de pago: <strong>PayPal</strong></div>
+  <div class="new-req-arrow">→</div>
+  <div class="new-req-label pulse" style="color:var(--red)">¿Cuántos archivos<br>hay que tocar?</div>
+</div>
+
+<!-- ── PASO 1: CLASES ── -->
+<div class="sec-title"><span>Clases del sistema</span></div>
+
+<div class="btn-wrap">
+  <button class="btn btn-classes" id="btn-classes" onclick="toggleClasses()">
+    <span id="cls-icon"></span>
+    <span id="cls-text">Ver qué hay que modificar en cada clase</span>
+  </button>
+</div>
+
+<div class="classes-grid">
+
+  <!-- ProcesadorPago -->
+  <div class="class-box affected">
+    <div class="class-header">
+      <div>
+        <div class="class-stereotype">«class»</div>
+        <div class="class-name">ProcesadorPago</div>
+      </div>
+      <span class="affect-badge badge-red">🔴 modificar</span>
+    </div>
+    <div class="class-section">
+      <div class="section-label">métodos existentes</div>
+      <div class="method"><div class="method-dot"></div>procesarTarjeta()</div>
+      <div class="method"><div class="method-dot"></div>procesarTransferencia()</div>
+      <div class="reveal-in-class">
+        <div class="method highlight" style="margin-top:5px"><div class="method-dot red"></div>procesarPayPal() ← agregar</div>
+      </div>
+    </div>
+    <div class="class-section">
+      <div class="reveal-in-class">
+        <div class="method highlight" style="font-size:10.5px;flex-direction:column;align-items:flex-start">
+          if tipo == "tarjeta" ...<br>
+          &nbsp;else if "transferencia"...<br>
+          &nbsp;<span style="color:var(--red)">else if "paypal"... ← nuevo</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ValidadorPago -->
+  <div class="class-box affected">
+    <div class="class-header">
+      <div>
+        <div class="class-stereotype">«class»</div>
+        <div class="class-name">ValidadorPago</div>
+      </div>
+      <span class="affect-badge badge-red">🔴 modificar</span>
+    </div>
+    <div class="class-section">
+      <div class="section-label">métodos existentes</div>
+      <div class="method"><div class="method-dot"></div>validarTarjeta(datos)</div>
+      <div class="method"><div class="method-dot"></div>validarTransferencia(datos)</div>
+      <div class="reveal-in-class">
+        <div class="method highlight" style="margin-top:5px"><div class="method-dot red"></div>validarPayPal(datos) ← agregar</div>
+      </div>
+    </div>
+    <div class="class-section">
+      <div class="reveal-in-class">
+        <div class="method highlight" style="font-size:10.5px;flex-direction:column;align-items:flex-start">
+          if tipo == "tarjeta" ...<br>
+          &nbsp;else if "transferencia"...<br>
+          &nbsp;<span style="color:var(--red)">else if "paypal"... ← nuevo</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UIRenderizador -->
+  <div class="class-box affected">
+    <div class="class-header">
+      <div>
+        <div class="class-stereotype">«class»</div>
+        <div class="class-name">UIRenderizador</div>
+      </div>
+      <span class="affect-badge badge-red">🔴 modificar</span>
+    </div>
+    <div class="class-section">
+      <div class="section-label">métodos existentes</div>
+      <div class="method"><div class="method-dot"></div>mostrarIconoTarjeta()</div>
+      <div class="method"><div class="method-dot"></div>mostrarIconoTransferencia()</div>
+      <div class="reveal-in-class">
+        <div class="method highlight" style="margin-top:5px"><div class="method-dot red"></div>mostrarIconoPayPal() ← agregar</div>
+      </div>
+    </div>
+    <div class="class-section">
+      <div class="reveal-in-class">
+        <div class="method highlight" style="font-size:10.5px;flex-direction:column;align-items:flex-start">
+          if tipo == "tarjeta" → 💳<br>
+          &nbsp;else if "transferencia" → 🏦<br>
+          &nbsp;<span style="color:var(--red)">else if "paypal" → 🅿️ ← nuevo</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ReporteContable -->
+  <div class="class-box affected">
+    <div class="class-header">
+      <div>
+        <div class="class-stereotype">«class»</div>
+        <div class="class-name">ReporteContable</div>
+      </div>
+      <span class="affect-badge badge-red">🔴 modificar</span>
+    </div>
+    <div class="class-section">
+      <div class="section-label">métodos existentes</div>
+      <div class="method"><div class="method-dot"></div>generarLineaTarjeta()</div>
+      <div class="method"><div class="method-dot"></div>generarLineaTransferencia()</div>
+      <div class="reveal-in-class">
+        <div class="method highlight" style="margin-top:5px"><div class="method-dot red"></div>generarLineaPayPal() ← agregar</div>
+      </div>
+    </div>
+    <div class="class-section">
+      <div class="reveal-in-class">
+        <div class="method highlight" style="font-size:10.5px;flex-direction:column;align-items:flex-start">
+          switch(tipo) {<br>
+          &nbsp; case "tarjeta": ...<br>
+          &nbsp; <span style="color:var(--red)">case "paypal": ... ← nuevo</span><br>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NotificadorEmail -->
+  <!-- <div class="class-box affected">
+    <div class="class-header">
+      <div>
+        <div class="class-stereotype">«class»</div>
+        <div class="class-name">NotificadorEmail</div>
+      </div>
+      <span class="affect-badge badge-red">🔴 modificar</span>
+    </div>
+    <div class="class-section">
+      <div class="section-label">métodos existentes</div>
+      <div class="method"><div class="method-dot"></div>emailConfirmTarjeta()</div>
+      <div class="method"><div class="method-dot"></div>emailConfirmTransferencia()</div>
+      <div class="reveal-in-class">
+        <div class="method highlight" style="margin-top:5px"><div class="method-dot red"></div>emailConfirmPayPal() ← agregar</div>
+      </div>
+    </div>
+    <div class="class-section">
+      <div class="reveal-in-class">
+        <div class="method highlight" style="font-size:10.5px;flex-direction:column;align-items:flex-start">
+          if tipo == "tarjeta" ...<br>
+          &nbsp;else if "transferencia"...<br>
+          &nbsp;<span style="color:var(--red)">else if "paypal"... ← nuevo</span>
+        </div>
+      </div>
+    </div>
+  </div> -->
+
+  <!-- PayPal nuevo -->
+  <div class="class-box new-class">
+    <div class="class-header">
+      <div>
+        <div class="class-stereotype">«lógica nueva»</div>
+        <div class="class-name">PayPal (lógica)</div>
+      </div>
+      <span class="affect-badge badge-yellow">🟡 crear</span>
+    </div>
+    <div class="class-section">
+      <div class="section-label">Metodos que necesitas</div>
+      <div class="method hl-yellow"><div class="method-dot yellow"></div>conectarAPI PayPal</div>
+      <div class="method hl-yellow"><div class="method-dot yellow"></div>token de autenticación</div>
+      <div class="method hl-yellow"><div class="method-dot yellow"></div>webhook de confirmación</div>
+    </div>
+    <div class="class-section">
+      <div class="reveal-in-class">
+        <div class="method hl-yellow" style="font-size:10.5px;flex-direction:column;align-items:flex-start">
+          Toda la lógica real de PayPal...<br>
+          &nbsp;que no se puede reutilizar ni compartir con las otras clases.<br>
+          &nbsp;<span style="color:var(--yellow)">Esto es lo que realmente necesitás agregar.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /classes-grid -->
+
+<!-- ── PASO 2: ARCHIVOS ── -->
+<div class="sec-title"><span>Archivos que hay que abrir</span></div>
+
+<div class="btn-wrap">
+  <button class="btn btn-files" id="btn-files" onclick="toggleFiles()">
+    <span id="files-icon">📂</span>
+    <span id="files-text">Revelar archivos a modificar</span>
+  </button>
+</div>
+
+<div id="files-container" style="display:none">
+  <div class="files-list">
+    <div class="file-row touched" style="animation-delay:.05s">
+      <div class="file-icon">📄</div>
+      <div class="file-name">ProcesadorPago.ts</div>
+      <div class="file-action">🔴 modificar</div>
+      <div class="file-why">Agregar case "paypal" al switch de procesamiento</div>
+    </div>
+    <div class="file-row touched" style="animation-delay:.15s">
+      <div class="file-icon">📄</div>
+      <div class="file-name">ValidadorPago.ts</div>
+      <div class="file-action">🔴 modificar</div>
+      <div class="file-why">Agregar validación de cuenta PayPal</div>
+    </div>
+    <div class="file-row touched" style="animation-delay:.25s">
+      <div class="file-icon">📄</div>
+      <div class="file-name">UIRenderizador.ts</div>
+      <div class="file-action">🔴 modificar</div>
+      <div class="file-why">Agregar ícono y formulario de PayPal</div>
+    </div>
+    <div class="file-row touched" style="animation-delay:.35s">
+      <div class="file-icon">📄</div>
+      <div class="file-name">ReporteContable.ts</div>
+      <div class="file-action">🔴 modificar</div>
+      <div class="file-why">Agregar formato de línea contable para PayPal</div>
+    </div>
+    <!-- <div class="file-row touched" style="animation-delay:.45s">
+      <div class="file-icon">📄</div>
+      <div class="file-name">NotificadorEmail.ts</div>
+      <div class="file-action">🔴 modificar</div>
+      <div class="file-why">Agregar template de email para confirmación PayPal</div>
+    </div> -->
+    <div class="file-row created" style="animation-delay:.55s">
+      <div class="file-icon">✨</div>
+      <div class="file-name">PayPalService.ts</div>
+      <div class="file-action">🟡 crear</div>
+      <div class="file-why">La lógica real de PayPal</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PASO 3: STATS ── -->
+<div class="sec-title"><span>Impacto total</span></div>
+
+<div class="btn-wrap">
+  <button class="btn btn-stats" id="btn-stats" onclick="toggleStats()">
+    <span id="stats-icon">📊</span>
+    <span id="stats-text">Revelar el costo real</span>
+  </button>
+</div>
+
+<div id="stats-container" style="display:none" class="fade-up">
+  <div class="impact-row">
+    <div class="impact-stat bad">
+      <div class="impact-num">4</div>
+      <div class="impact-label">archivos a modificar</div>
+    </div>
+    <div class="impact-stat bad">
+      <div class="impact-num">4</div>
+      <div class="impact-label">suites de test a actualizar</div>
+    </div>
+    <div class="impact-stat bad">
+      <div class="impact-num">4</div>
+      <div class="impact-label">puntos de fallo potencial</div>
+    </div>
+    <div class="impact-stat" style="border-color:rgba(91,201,138,0.3);background:rgba(91,201,138,0.05)">
+      <div class="impact-num" style="color:var(--green)">1</div>
+      <div class="impact-label" style="color:var(--green)">archivo realmente necesario</div>
+    </div>
+  </div>
+
+  <div class="bottom-msg">
+    <div class="question">"¿Cuántos archivos hay que tocar para agregar PayPal?"</div>
+    <div class="answer">
+      4 archivos que ya funcionaban, ya estaban testeados, y que no tienen nada que ver con PayPal.<br>
+      Cada uno es una oportunidad de romper algo que estaba bien.
+      <strong style="color:var(--red)">Eso es lo que OCP quiere evitar.</strong>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── PASO 1: clases se revelan con delay escalonado ──
+  let classesOpen = false;
+  function toggleClasses() {
+    classesOpen = !classesOpen;
+    const boxes = document.querySelectorAll('.class-box');
+    const btn   = document.getElementById('btn-classes');
+    const icon  = document.getElementById('cls-icon');
+    const text  = document.getElementById('cls-text');
+
+    boxes.forEach((box, i) => {
+      setTimeout(() => {
+        classesOpen ? box.classList.add('revealed') : box.classList.remove('revealed');
+      }, classesOpen ? i * 130 : 0);
+    });
+
+    text.textContent = classesOpen ? 'Ocultar modificaciones' : 'Modificaciones en cada clase';
+    btn.classList.toggle('open', classesOpen);
+  }
+
+  // ── PASO 2: archivos ──
+  let filesOpen = false;
+  function toggleFiles() {
+    filesOpen = !filesOpen;
+    const c    = document.getElementById('files-container');
+    const btn  = document.getElementById('btn-files');
+    const icon = document.getElementById('files-icon');
+    const text = document.getElementById('files-text');
+
+    c.style.display  = filesOpen ? 'block' : 'none';
+    text.textContent = filesOpen ? 'Ocultar archivos' : 'Revelar archivos a modificar';
+    btn.classList.toggle('open', filesOpen);
+  }
+
+  // ── PASO 3: stats ──
+  let statsOpen = false;
+  function toggleStats() {
+    statsOpen = !statsOpen;
+    const c    = document.getElementById('stats-container');
+    const btn  = document.getElementById('btn-stats');
+    const icon = document.getElementById('stats-icon');
+    const text = document.getElementById('stats-text');
+
+    c.style.display  = statsOpen ? 'block' : 'none';
+    text.textContent = statsOpen ? 'Ocultar impacto' : 'Revelar el costo real';
+    btn.classList.toggle('open', statsOpen);
+  }
+</script>
+
+</body>
+</html>
