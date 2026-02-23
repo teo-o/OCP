@@ -581,6 +581,122 @@
 body { padding-top: 82px !important; }
 </style>
 
+
+<style>
+/* ══════════════════════════════
+   MOBILE RESPONSIVE — inyectado
+   ══════════════════════════════ */
+
+/* ── NAV mobile ── */
+@media (max-width: 640px) {
+  .site-nav {
+    padding: 0 14px;
+    height: auto;
+    min-height: 54px;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .nav-brand { font-size: 12px; }
+  .nav-links { gap: 3px; }
+  .nav-link  { font-size: 10px; padding: 4px 8px; gap: 4px; }
+  .nav-step  { display: none; }
+  body { padding-top: 90px !important; }
+}
+
+/* ── index.html / ejemplo-fragil ── */
+@media (max-width: 640px) {
+  body { padding-left: 14px !important; padding-right: 14px !important; }
+
+  /* header */
+  .header { margin-bottom: 24px; }
+  h1 { font-size: 22px !important; }
+
+  /* scenario */
+  .scenario { font-size: 12px; padding: 12px 14px; margin-bottom: 20px; }
+
+  /* requerimiento — apila verticalmente */
+  .new-req { flex-direction: column; align-items: center; gap: 8px; margin-bottom: 20px; }
+  .new-req-arrow { transform: rotate(90deg); font-size: 18px; }
+  .new-req-box { font-size: 12px; padding: 10px 16px; text-align: center; }
+
+  /* grids de clases → 1 columna */
+  .classes-grid,
+  .grid-3,
+  .grid-3-orch { grid-template-columns: 1fr !important; }
+
+  /* botones — ancho completo */
+  .btn-wrap { padding: 0 4px; }
+  .btn { width: 100%; justify-content: center; font-size: 12px; padding: 11px 16px; }
+
+  /* file-row — reorganizar en 2 líneas */
+  .file-row { flex-wrap: wrap; gap: 6px; }
+  .file-why  { flex-basis: 100%; margin-left: 0; text-align: left; padding-left: 27px; }
+
+  /* stats — 2 columnas */
+  .impact-row { gap: 10px; }
+  .impact-stat { min-width: calc(50% - 10px); padding: 12px 10px; }
+  .impact-num  { font-size: 26px; }
+
+  /* bottom msg */
+  .bottom-msg { padding: 16px 14px; }
+  .bottom-msg .question { font-size: 14px; }
+}
+
+/* ── concepto-ocp-polimorfismo ── */
+@media (max-width: 640px) {
+  /* open/closed grid 2col → 1col */
+  .main-grid { grid-template-columns: 1fr !important; }
+
+  /* flujo polimorfismo — stack vertical */
+  .flow { grid-template-columns: 1fr !important; }
+  .flow-arrow { display: none; }
+  .flow-node { border-right: none !important; border-left: none !important; border-bottom: 1px solid var(--border, #252d3d); }
+  .flow-node:last-child { border-bottom: none; }
+
+  /* alarm bad vs good — stack vertical */
+  .alarm-grid { grid-template-columns: 1fr !important; }
+  .vs-divider { padding: 8px 0; }
+
+  /* tensions — 1 columna */
+  .tensions-grid { grid-template-columns: 1fr !important; }
+
+  /* balance bar — stack vertical */
+  .balance-bar { grid-template-columns: 1fr !important; gap: 8px; }
+  .balance-right { text-align: left !important; }
+  .balance-center { justify-content: flex-start; padding: 0; }
+  .balance-answers { gap: 10px; }
+
+  /* core rule banner */
+  .core-rule { flex-direction: column; gap: 10px; padding: 16px; }
+
+  /* section titles */
+  .section-title { font-size: 10px; }
+}
+
+/* ── ejemplo-fragil-conSRP ── */
+@media (max-width: 640px) {
+  /* context banner */
+  .context { flex-direction: column; gap: 8px; padding: 12px 14px; }
+
+  /* status pills — wrap */
+  .status-row { flex-direction: column; align-items: stretch; gap: 8px; }
+  .status-pill { justify-content: center; font-size: 11px; }
+
+  /* explain/diff grid */
+  .explain-grid,
+  .diff-box { grid-template-columns: 1fr !important; }
+
+  /* closing */
+  .closing { padding: 14px; }
+  .closing .q { font-size: 14px; }
+
+  /* impact row */
+  .impact-stat { min-width: calc(50% - 10px); }
+}
+</style>
+
 </head>
   <body>
 <!-- NAVBAR -->
